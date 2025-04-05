@@ -33,18 +33,17 @@ jobs:
       #### Создаем рабочую базу данных 
     - name: Create working database
       run: |
-        echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" > .env
-        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -c "CREATE DATABASE ${{ secrets.DB_NAME }};"
+        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -c "CREATE DATABASE ${{ secrets.DB_NAME }};"
 
       #### Создаем пользователя и выдаем привилегии 
     - name: Create user and grant permissions
       run: |
         echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" > .env
-        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "CREATE USER ${{ secrets.DB_USER }} WITH PASSWORD '${{ secrets.DB_PASSWORD }}';"
-        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON DATABASE ${{ secrets.DB_NAME }} TO ${{ secrets.DB_USER }};"
-        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON SCHEMA public TO ${{ secrets.DB_USER }};"
-        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO ${{ secrets.DB_USER }};"
-        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO ${{ secrets.DB_USER }};"
+        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "CREATE USER ${{ secrets.DB_USER }} WITH PASSWORD '${{ secrets.DB_PASSWORD }}';"
+        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON DATABASE ${{ secrets.DB_NAME }} TO ${{ secrets.DB_USER }};"
+        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON SCHEMA public TO ${{ secrets.DB_USER }};"
+        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO ${{ secrets.DB_USER }};"
+        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO ${{ secrets.DB_USER }};"
 
       #### Устанавливаем Flyway
     - name: Setup Flyway
