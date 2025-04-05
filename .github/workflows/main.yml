@@ -33,7 +33,7 @@ jobs:
       #### Создаем рабочую базу данных 
     - name: Create working database
       run: |
-        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -c "CREATE DATABASE ${{ secrets.DB_NAME }};"
+        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }} -c "CREATE DATABASE ${{ secrets.DB_NAME }};"
 
       #### Создаем пользователя и выдаем привилегии 
     - name: Create user and grant permissions
