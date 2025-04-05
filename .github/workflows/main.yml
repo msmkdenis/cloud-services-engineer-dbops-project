@@ -10,7 +10,54 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    #### Добавьте шаг с Flyway-миграциями
+      #### Запуск PostgreSQL 16 в контейнере через compose с использованием .env из секретов
+    - name: Start PostgreSQL via docker compose with secrets
+      run: |
+        echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" > .env
+        echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+        echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+        docker-compose up -d
+
+      #### Ждем проверки готовности PostgreSQL  
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        echo "Waiting for PostgreSQL..."
+        until docker exec postgres pg_isready -U user; do
+          sleep 1
+        done
+        echo "PostgreSQL is ready"
+
+      #### Создаем рабочую базу данных 
+    - name: Create working database
+      run: |
+        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -c "CREATE DATABASE ${{ secrets.DB_NAME }};"
+
+      #### Создаем пользователя и выдаем привилегии 
+    - name: Create user and grant permissions
+      run: |
+        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "CREATE USER ${{ secrets.DB_USER }} WITH PASSWORD '${{ secrets.DB_PASSWORD }}';"
+        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON DATABASE ${{ secrets.DB_NAME }} TO ${{ secrets.DB_USER }};"
+        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON SCHEMA public TO ${{ secrets.DB_USER }};"
+        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO ${{ secrets.DB_USER }};"
+        docker exec -u postgres postgres psql -U ${POSTGRES_USER} -d ${{ secrets.DB_NAME }} -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO ${{ secrets.DB_USER }};"
+
+      #### Устанавливаем Flyway
+    - name: Setup Flyway
+      run: |
+        curl -L -o flyway-commandline.tar.gz "https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/11.1.0/flyway-commandline-11.1.0-linux-x64.tar.gz"
+        tar -xzf flyway-commandline.tar.gz
+        rm flyway-commandline.tar.gz 
+        sudo ln -s $(pwd)/flyway-11.1.0/flyway /usr/local/bin/flyway 
+
+      #### Применяем миграции с помощью Flyway
+    - name: Run Flyway migrations
+      env:
+        FLYWAY_URL: jdbc:postgresql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}
+        FLYWAY_USER: ${{ secrets.DB_USER }}
+        FLYWAY_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        FLYWAY_LOCATIONS: filesystem:./migrations
+      run: |
+        flyway migrate
 
     ### Этот шаг оставьте без изменений
     - name: Download and setup autotests binaries
