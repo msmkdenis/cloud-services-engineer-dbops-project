@@ -30,7 +30,7 @@ GitHub Actions позволяет для тестирования разверн
 CREATE DATABASE ${{ secrets.DB_NAME }};
 
 -- Создание пользователя с заданным паролем
-CREATE USER ${{ secrets.DB_USER }} WITH PASSWORD ${{ secrets.DB_PASSWORD }};
+CREATE USER ${{ secrets.DB_USER }} WITH PASSWORD '${{ secrets.DB_PASSWORD }}';
 
 -- Назначение всех привилегий на базу данных пользователю
 GRANT ALL PRIVILEGES ON DATABASE ${{ secrets.DB_NAME }} TO ${{ secrets.DB_USER }};
