@@ -118,6 +118,24 @@ jobs:
           GROUP BY o.date_created;
         "
 
+      #### Получаем план запроса после создания индексов для сравнения
+    - name: Run EXPLAIN VERBOSE ANALYZE after indexes
+      run: |
+        docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
+          WITH shipped_orders AS (
+            SELECT id, date_created
+            FROM orders
+            WHERE status = 'shipped'
+              AND date_created > current_date - interval '7 day'
+          )
+          SELECT 
+              o.date_created, 
+              SUM(op.quantity)
+          FROM shipped_orders o
+          JOIN order_product op ON op.order_id = o.id
+          GROUP BY o.date_created;
+          "
+
     ### Этот шаг оставьте без изменений
     - name: Download and setup autotests binaries
       run: |
