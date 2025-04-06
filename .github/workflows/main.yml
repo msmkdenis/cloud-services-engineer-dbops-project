@@ -52,13 +52,40 @@ jobs:
         rm flyway-commandline.tar.gz 
         sudo ln -s $(pwd)/flyway-11.1.0/flyway /usr/local/bin/flyway 
 
-      #### Применяем миграции с помощью Flyway
+      #### Применяем миграции с помощью Flyway до таргета 3 (до создания индексов)
     - name: Run Flyway migrations
       env:
         FLYWAY_URL: jdbc:postgresql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}
         FLYWAY_USER: ${{ secrets.DB_USER }}
         FLYWAY_PASSWORD: ${{ secrets.DB_PASSWORD }}
         FLYWAY_LOCATIONS: filesystem:./migrations
+        FLYWAY_TARGET: 3
+      run: |
+        flyway migrate
+
+      #### Получаем план запроса до создания индексов для сравнения
+    - name: Run EXPLAIN VERBOSE ANALYZE after migration
+      run: |
+        docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
+          EXPLAIN (ANALYZE, VERBOSE)
+          SELECT 
+            o.date_created, 
+            SUM(op.quantity) 
+          FROM orders AS o
+          JOIN order_product AS op ON o.id = op.order_id
+          WHERE o.status = 'shipped' 
+            AND o.date_created > now() - interval '7 DAY'
+          GROUP BY o.date_created;
+        "
+        
+      #### Применяем миграции с помощью Flyway до таргета 4 (создаем индексы)
+    - name: Run Flyway migrations
+      env:
+        FLYWAY_URL: jdbc:postgresql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}
+        FLYWAY_USER: ${{ secrets.DB_USER }}
+        FLYWAY_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        FLYWAY_LOCATIONS: filesystem:./migrations
+        FLYWAY_TARGET: 4
       run: |
         flyway migrate
 
