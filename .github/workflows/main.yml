@@ -64,7 +64,7 @@ jobs:
         flyway migrate
 
       #### Получаем план запроса до создания индексов для сравнения
-    - name: Run EXPLAIN VERBOSE ANALYZE before indexes
+    - name: Run EXPLAIN ANALYZE VERBOSE before indexes
       run: |
         docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
           EXPLAIN (ANALYZE, VERBOSE)
@@ -104,7 +104,7 @@ jobs:
         "
 
       #### Получаем план запроса после создания индексов для сравнения
-    - name: Run EXPLAIN VERBOSE ANALYZE after indexes
+    - name: Run EXPLAIN ANALYZE VERBOSE after indexes
       run: |
         docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
           EXPLAIN (ANALYZE, VERBOSE)
@@ -119,7 +119,7 @@ jobs:
         "
 
       #### Получаем результат запроса
-    - name: Run EXPLAIN VERBOSE ANALYZE after indexes
+    - name: Run query - check results
       run: |
         docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
           SELECT 
