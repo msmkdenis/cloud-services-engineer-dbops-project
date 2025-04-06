@@ -38,7 +38,6 @@ jobs:
       #### Создаем пользователя и выдаем привилегии 
     - name: Create user and grant permissions
       run: |
-        echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" > .env
         docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "CREATE USER ${{ secrets.DB_USER }} WITH PASSWORD '${{ secrets.DB_PASSWORD }}';"
         docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON DATABASE ${{ secrets.DB_NAME }} TO ${{ secrets.DB_USER }};"
         docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON SCHEMA public TO ${{ secrets.DB_USER }};"
@@ -62,6 +61,21 @@ jobs:
         FLYWAY_LOCATIONS: filesystem:./migrations
       run: |
         flyway migrate
+
+      #### Получаем план запроса после создания индексов для сравнения
+    - name: Run EXPLAIN VERBOSE ANALYZE after migration
+      run: |
+        docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
+          EXPLAIN (ANALYZE, VERBOSE)
+          SELECT 
+            o.date_created, 
+            SUM(op.quantity) 
+          FROM orders AS o
+          JOIN order_product AS op ON o.id = op.order_id
+          WHERE o.status = 'shipped' 
+            AND o.date_created > now() - interval '7 DAY'
+          GROUP BY o.date_created;
+        "
 
     ### Этот шаг оставьте без изменений
     - name: Download and setup autotests binaries
