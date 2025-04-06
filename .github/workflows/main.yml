@@ -38,7 +38,7 @@ jobs:
       #### Создаем пользователя и выдаем привилегии 
     - name: Create user and grant permissions
       run: |
-        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "CREATE USER ${{ secrets.DB_USER }} WITH PASSWORD '${{ secrets.DB_PASSWORD }}'';"
+        docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "CREATE USER ${{ secrets.DB_USER }} WITH PASSWORD '${{ secrets.DB_PASSWORD }}';"
         docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON DATABASE ${{ secrets.DB_NAME }} TO ${{ secrets.DB_USER }};"
         docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "GRANT ALL PRIVILEGES ON SCHEMA public TO ${{ secrets.DB_USER }};"
         docker exec -u postgres postgres psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.DB_NAME }} -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO ${{ secrets.DB_USER }};"
