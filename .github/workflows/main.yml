@@ -64,7 +64,7 @@ jobs:
         flyway migrate
 
       #### Получаем план запроса до создания индексов для сравнения
-    - name: Run EXPLAIN VERBOSE ANALYZE after migration
+    - name: Run EXPLAIN VERBOSE ANALYZE before indexes
       run: |
         docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
           EXPLAIN (ANALYZE, VERBOSE)
@@ -77,7 +77,7 @@ jobs:
             AND o.date_created > now() - interval '7 DAY'
           GROUP BY o.date_created;
         "
-        
+
       #### Применяем миграции с помощью Flyway до таргета 4 (создаем индексы)
     - name: Run Flyway migrations
       env:
@@ -89,8 +89,22 @@ jobs:
       run: |
         flyway migrate
 
+      #### 
+    - name: Run ANALYZE orders
+      run: |
+        docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
+          ANALYZE orders;
+        "
+
+      #### 
+    - name: Run ANALYZE order_product
+      run: |
+        docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
+          ANALYZE order_product;
+        "
+
       #### Получаем план запроса после создания индексов для сравнения
-    - name: Run EXPLAIN VERBOSE ANALYZE after migration
+    - name: Run EXPLAIN VERBOSE ANALYZE after indexes
       run: |
         docker exec postgres psql -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "
           EXPLAIN (ANALYZE, VERBOSE)
